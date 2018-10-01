@@ -1,3 +1,11 @@
+docker run --network backend-network \
+  --name ory-hydra-example--postgres \
+  -e POSTGRES_USER=hydra \
+  -e POSTGRES_PASSWORD=secret \
+  -e POSTGRES_DB=hydra \
+  -d postgres:9.6
+
+
  docker run -it --rm --network backend-network -e DATABASE_URL=postgres://hydra:secret@ory-hydra-example--postgres:5432/hydra?sslmode=disable -e SYSTEM_SECRET=CuTIZ7dahv.J9tPr-i7_ZXV4BsfgDgjp oryd/hydra:v1.0.0-beta.8 migrate sql $DATABASE_URL
 
 
@@ -7,5 +15,7 @@
 
 
 
- docker run -it --rm --network backend-network -e DATABASE_URL=postgres://hydra:secret@ory-hydra-example--postgres:5432/hydra?sslmode=disable oryd/hydra migrate sql $DATABASE_URL
+ docker run -it --rm --network backend-network -e DATABASE_URL=postgres://hydra:secret@ory-hydra-example--postgres:5432/hydra?sslmode=disable  oryd/hydra:v1.0.0-beta.8 migrate sql -e
+
+-e mean apply from env variable
 

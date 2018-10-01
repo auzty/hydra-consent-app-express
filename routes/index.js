@@ -53,10 +53,9 @@ const catcher = (w) => (error) => {
 */
 // Authorization uri definition
 const authorizationUri = oauth2.authorizationCode.authorizeURL({
-  redirect_uri: 'http://localhost:9010/callback',
-  scope: 'offline,openid',
-  state: 'rskhrvvawskvckmytldcsrzt',
-  nonce: 'cixdpcpkwpqcihlrkzkbpgkp'
+  redirect_uris: 'http://localhost:9010/callback',
+  scope: ['offline','openid'],
+  state: 'rskhrvvawskvckmytldcsrzt'
 });
 
 // Initial page redirecting to Github
