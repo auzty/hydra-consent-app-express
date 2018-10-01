@@ -1,0 +1,34 @@
+docker run -d   --name ory-hydra-example--hydra   --network backend-network   -p 9000:4444   -p 9001:4445   --env-file ory.env   -e OAUTH2_ISSUER_URL=http://127.0.0.1:9000/   -e OAUTH2_CONSENT_URL=http://127.0.0.1:9020/consent   -e OAUTH2_LOGIN_URL=http://127.0.0.1:9020/login   oryd/hydra:v1.0.0-beta.8 serve all --dangerous-force-http
+
+
+hydra run with port 9000->4444 and 9001->4445(admin port)
+               -> oauth2_issuer_url -> self (127.0.0.1:9000)
+               -> oauth2_consent_url -> /consent (127.0.0.1:9020/consent)
+               -> oauth2_login_url   -> /login (127.0.0.1:9020/login)
+
+
+docker run -d   --name ory-hydra-example--consent   -p 9020:3000   --network backend-network   -e HYDRA_URL=http://ory-hydra-example--hydra:4445   -e NODE_TLS_REJECT_UNAUTHORIZED=0   oryd/hydra-login-consent-node:v1.0.0-beta.8
+
+consent run with port 9020->3000 (a nodejs login backend)
+                 -> hydra_url -> 127.0.0.1:4445 (hydra admin port)
+
+
+docker run --rm -it   --network backend-network   -p 9010:9010   oryd/hydra:v1.0.0-beta.8   token user     --port 9010     --auth-url http://127.0.0.1:9000/oauth2/auth     --token-url http://ory-hydra-example--hydra:4444/oauth2/token     --client-id another-consumer     --client-secret consumer-secret     --scope openid,offline     --redirect http://127.0.0.1:9010/callback
+
+
+consumer run with port 9010 (Authorization Code Flow)
+                  -> auth-url -> 127.0.0.1:9000/oauth2/auth (hydra)
+                  -> token-url -> 127.0.0.1:9000/oauth2/token (hydra)
+
+consumer authorized url : http://127.0.0.1:9000/oauth2/auth?client_id=another-consumer&redirect_uri=http://127.0.0.1:9010/callback&response_type=code&scope=openid+offline&state=rskhrvvawskvckmytldcsrzt&nonce=cixdpcpkwpqcihlrkzkbpgyp&prompt=&max_age=0
+
+
+step ->
+1. [now @ 9010] clicking link /oauth2/auth?.... 
+2. redirect to 3000 (fill the login form)
+3. still @ 3000 and check the allow access (Hi foo@bar.com, application another-consumer wants access resources on your behalf and to:)
+4. redirect to callbackurl (now @ 9010) and get code access token, refresh token)
+Access Token: 5jHUa7VlsU4RNGu8o0xmPmUBGKYWPsEmJc5IRSJ3jIc.YqfItKBoN5RtUimhi46SwFNjPzJRvoNT8qpxUgFLnaU
+Refresh Token: bqM4-ayUXOTqJ8T88U7eGTIFnd3z_yUmLuy0Ri6lCr4.vmfwx6LFQMRMS32QscZaGBfUmfgZti4Qu6N0UBuYZ9o
+Expires in: 2018-09-30 21:59:15.912818708 +0000 UTC m=+3859.084802201
+//---- end

@@ -1,0 +1,58 @@
+docker run -d \
+  --name ory-hydra-example--hydra \
+  --network backend-network \
+  -p 9000:4444 \
+  -p 9001:4445 \
+  --env-file ory.env \
+  -e OAUTH2_ISSUER_URL=http://127.0.0.1:9000/ \
+  -e OAUTH2_CONSENT_URL=http://127.0.0.1:3001/consent \
+  -e OAUTH2_LOGIN_URL=http://127.0.0.1:3001/login \
+  oryd/hydra:v1.0.0-beta.8 serve all --dangerous-force-http
+
+
+docker run --rm -it \
+  --network backend-network \
+  oryd/hydra:v1.0.0-beta.8 \
+  clients create \
+    --endpoint http://ory-hydra-example--hydra:4445 \
+    --id some-consumer \
+    --secret some-secret \
+    --grant-types client_credentials \
+    --response-types token,code
+
+
+docker run --rm -it \
+  --network backend-network \
+  oryd/hydra:v1.0.0-beta.8 \
+  clients create \
+    --endpoint http://ory-hydra-example--hydra:4445 \
+    --id another-consumer \
+    --secret consumer-secret \
+    -g authorization_code,refresh_token \
+    -r token,code,id_token \
+    --scope openid,offline \
+    --callbacks http://127.0.0.1:3000/callback
+
+
+docker run -d \
+  --name ory-hydra-example--consent \
+  -p 9020:3000 \
+  --network backend-network \
+  -e HYDRA_URL=http://ory-hydra-example--hydra:4445 \
+  -e NODE_TLS_REJECT_UNAUTHORIZED=0 \
+  oryd/hydra-login-consent-node:v1.0.0-beta.8
+
+
+
+docker run --rm -it \
+  --network backend-network \
+  -p 9010:9010 \
+  oryd/hydra:v1.0.0-beta.8 \
+  token user \
+    --port 9010 \
+    --auth-url http://127.0.0.1:9000/oauth2/auth \
+    --token-url http://ory-hydra-example--hydra:4444/oauth2/token \
+    --client-id another-consumer \
+    --client-secret consumer-secret \
+    --scope openid,offline \
+    --redirect http://127.0.0.1:9010/callback
